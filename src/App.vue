@@ -26,26 +26,30 @@
                     {{product.productName}}<br/>
   									<p class="price"><h5>{{product.price}} ฿</h5> </p>
                     {{product.amount}} left <br>
-                    <button type="button" class="btn btn-outline-primary" @click="addToCart(product.productName,product.price,product['.key'],product.amount,product.imgLink)">Add to cart</button>
+                    <button type="button" class="btn btn-outline-primary" v-if="product.amount !==0" @click="addToCart(product.productName,product.price,product['.key'],product.amount,product.imgLink)">Add to cart</button>
 							</li>
 						</ul>
 						<hr>
 					</div>
           <div class="col-3" style="text-align: center" >
             <h2>Your Cart</h2>
-             {{itemCounter}} item(s) <br>
              <div v-for="(item , index) in items">
-               {{ countItem(index) }}
                <ul>
-                 <li class="list-group-item" style="width:320px; margin-bottom: 10px; " ><img :src="item.imgLink" width="50" height="50"> {{item.productName}} : {{item.price}} ฿ <br><button class="btn btn-danger" style="margin-bottom: 20px; margin-top: 20px" @click="pickOff(item.productName,item.price,item.amount,item.imgLink,item.key,index)">Bring this out</button></li>
+                 <li class="list-group-item" style="width:350px; margin-bottom: 10px; " ><img :src="item.imgLink" width="50" height="50"> {{item.productName}} : {{item.price}} ฿ <br> {{item.amount}}<br>
+                   <button class="btn btn-danger" style="margin-bottom: 20px; margin-top: 20px" @click="pickOff(item.productName,item.price,item.amount,item.imgLink,item.key,index,item.amountf)">Bring this off</button></li>
                </ul>
              </div>
 
             All of these : <strong>{{cost}} ฿ </strong><br>
-            <button type="button" class="btn btn-outline-success" @click="checkOut" >Check out</button>
+            <button type="button" class="btn btn-outline-success" @click="checkOut">Check out</button>
                 <!-- <button @click="removeTodoFire(todo['.key'])">X</button> -->
           </div>
-				</div>
+				 </div>
+        <div class="" v-if="inputPassword!=passwordForAdd" style="margin-bottom: 30px">
+          <h2>Enter password to add product</h2>
+          <input type="password" class="form-control" placeholder="Password" v-model="inputPassword" >
+        </div>
+      <div class="" v-if="inputPassword==passwordForAdd" >
         <div>
           <h1>Add product</h1> <br>
         </div>
@@ -64,9 +68,10 @@
           <div class="col">
             <input type="text" class="form-control" placeholder="Image link" v-model="l" >
           </div>
-          <button class="btn btn-success" @click="addProduct">Add</button>
+          <button class="btn btn-success" @click="addProduct"> Add </button>
+          <button class="btn btn-danger" @click="changePassword"> Cancel </button>
         </div>
-
+      </div>
 		</div>
 		</div>
     <!-- firebase -->
@@ -103,61 +108,101 @@ export default {
       productName: '',
       price: '',
       addProductButtonState: false,
-      addProductPassword: '',
+      inputPassword: '',
       passwordForAdd: '123456',
+      authorized: false,
       onAdd: false,
       p: null,
       n: null,
       l: null,
       a: null,
-      itemCounter: 0,
       cost: 0,
+      startA: 1,
       items: []
     }
   },
   methods: {
-    pickOff (name,price,amount,link,key,index) {
+    changePassword () {
+      this.inputPassword = ''
+    },
+    pickOff (name,price,amount,link,key,index,amountf) {
+      console.log(amountf)
       db.ref('products/' + key).set({
         productName: name,
         price: price,
         imgLink: link,
-        amount: amount + 1
+        amount: amountf
       })
-      this.cost-=price
-      this.itemCounter -= 1
-      this.items.splice(index, 1);
+      this.cost-=price * amount
+      this.items.splice(index, 1)
     },
     checkOut () {
       this.items = []
-      this.itemCounter = 0
       this.cost = 0
-    },
-    countItem (index) {
-      this.itemCounter = index + 1
+      swal(
+        'Thank you!',
+        'come back again :)',
+        'success'
+        )
     },
     addToCart (name,price,key,amount,link) {
-      this.items.push({
-        productName: name,
-        price: price,
-        key: key,
-        amount: amount - 1,
-        imgLink: link})
-
-        db.ref('products/' + key).set({
+      console.log(amount)
+      if (this.items[0] == null) {
+        this.cost += price * 1
+        this.items.push({
           productName: name,
           price: price,
+          key: key,
+          amount: 1,
           imgLink: link,
-          amount: amount - 1
-        })
-        this.cost += price * 1
+          amountf: amount})
 
+          db.ref('products/' + key).set({
+            productName: name,
+            price: price,
+            imgLink: link,
+            amount: amount - 1
+          })
+      } else {
+        for (var i = 0; i < this.items.length; i++) {
+          if (name==this.items[i].productName) {
+            this.cost += price * 1
+            db.ref('products/' + key).set({
+              productName: name,
+              price: price,
+              imgLink: link,
+              amount: amount - 1
+            })
+            this.items[i].push({
+              productName: name,
+              price: price,
+              key: key,
+              amount: this.items[i].amount += 1,
+              imgLink: link,
+              amountf: amount})
+
+
+          } else if (i == this.items.length - 1 && name !== this.items[i].productName) {
+            this.cost += price * 1
+            db.ref('products/' + key).set({
+              productName: name,
+              price: price,
+              imgLink: link,
+              amount: amount - 1
+            })
+            this.items.push({
+              productName: name,
+              price: price,
+              key: key,
+              amount: 1,
+              imgLink: link,
+              amountf: amount})
+              break
+          }
+        }
+      }
     },
     addProduct () {
-      // swal(
-      //   'Good job!',
-      //   'You clicked the button!',
-      //   'success'
-      //   )
       console.log(this.p)
       console.log(this.n)
       console.log(this.a)
@@ -212,9 +257,6 @@ export default {
           'warning'
           )
       }
-
-
-
     },
     addTodoFire () {
       todosRef.push({
