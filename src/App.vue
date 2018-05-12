@@ -173,13 +173,19 @@ export default {
               imgLink: link,
               amount: amount - 1
             })
-            this.items[i].push({
-              productName: name,
-              price: price,
-              key: key,
-              amount: this.items[i].amount += 1,
-              imgLink: link,
-              amountf: amount})
+            this.item[i].productName = name
+            this.item[i].price = price
+            this.item[i].key = key
+            this.item[i].amount = this.items[i].amount += 1
+            this.item[i].imgLink = link
+            this.item[i].amountf = amount
+            // this.items[i].push({
+            //   productName: name,
+            //   price: price,
+            //   key: key,
+            //   amount: this.items[i].amount += 1,
+            //   imgLink: link,
+            //   amountf: amount})
 
 
           } else if (i == this.items.length - 1 && name !== this.items[i].productName) {
@@ -203,10 +209,6 @@ export default {
       }
     },
     addProduct () {
-      console.log(this.p)
-      console.log(this.n)
-      console.log(this.a)
-      console.log(this.l)
       if (this.n!==null||this.p!==null||this.a!==null||this.l!==null) {
         if (this.n!==null) {
           if (this.p!==null&&this.p>=0) {
